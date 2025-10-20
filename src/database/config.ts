@@ -2,14 +2,13 @@ import mongoose from 'mongoose';
 import 'dotenv/config';
 
 const connectDB = async () => {
-  // Escolhe a URI do banco baseado no ambiente
   const dbUri = process.env.NODE_ENV === 'production' 
     ? process.env.MONGO_URI_CLOUD
     : process.env.MONGO_URI_LOCAL;
 
   if (!dbUri) {
     console.error('ERRO: MONGO_URI não definida nas variáveis de ambiente.');
-    process.exit(1); // Encerra a aplicação
+    process.exit(1); 
   }
 
   try {

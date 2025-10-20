@@ -1,0 +1,230 @@
+# Arquivo de importação do Insomnia para a API de Autenticação
+_type: export
+__export_format: 4
+__export_date: 2025-10-19T22:00:00.000Z
+__export_source: insomnia.desktop.app:v2023.5.8
+
+resources:
+
+  # --- AMBIENTES (Vercel e Local) ---
+  - _id: env_base
+    _type: environment
+    parentId: wrk_1
+    name: Base Environment (Produção)
+    data:
+      base_url: https://mini-projeto-gamma.vercel.app
+    dataPropertyOrder:
+      "&":
+        - base_url
+    
+
+  - _id: wrk_1
+    _type: workspace
+    name: Mini-Projeto Auth API
+    description: API de autenticação com Node.js, Express e JWT
+    scope: collection
+
+  # --- PASTA 1: REGISTER ---
+  - _id: fld_register
+    _type: request_group
+    parentId: wrk_1
+    name: 1. Register (POST /api/register)
+    description: Criação de novos usuários
+
+  - _id: req_reg_success
+    _type: request
+    parentId: fld_register
+    name: Sucesso (201)
+    method: POST
+    url: "{{ _.base_url }}/api/register"
+    body:
+      mimeType: application/json
+      # Usamos um timestamp para garantir que o email seja sempre único
+      text: |-
+        {
+          "name": "Usuario Insomnia",
+          "email": "insomnia-{% now 'millis' %}@teste.com",
+          "password": "senhaForte123"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  - _id: req_reg_email_exists
+    _type: request
+    parentId: fld_register
+    name: Erro - Email já existe (409)
+    method: POST
+    url: "{{ _.base_url }}/api/register"
+    body:
+      mimeType: application/json
+      # Use um email que você SABE que já existe
+      text: |-
+        {
+          "name": "Usuario Repetido",
+          "email": "teste-prod@email.com",
+          "password": "senhaForte123"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  - _id: req_reg_pass_invalid
+    _type: request
+    parentId: fld_register
+    name: Erro - Senha curta (400)
+    method: POST
+    url: "{{ _.base_url }}/api/register"
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Senha Curta",
+          "email": "senha-curta-{% now 'millis' %}@teste.com",
+          "password": "123"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        
+  - _id: req_reg_email_invalid
+    _type: request
+    parentId: fld_register
+    name: Erro - Email inválido (400)
+    method: POST
+    url: "{{ _.base_url }}/api/register"
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Email Invalido",
+          "email": "email-invalido.com",
+          "password": "senhaForte123"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  - _id: req_reg_bad_request
+    _type: request
+    parentId: fld_register
+    name: Erro - Requisição mal formatada (400)
+    method: POST
+    url: "{{ _.base_url }}/api/register"
+    body:
+      mimeType: application/json
+      # Faltando o campo "password"
+      text: |-
+        {
+          "name": "Faltando Senha",
+          "email": "mal-formatado-{% now 'millis' %}@teste.com"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # --- PASTA 2: LOGIN ---
+  - _id: fld_login
+    _type: request_group
+    parentId: wrk_1
+    name: 2. Login (POST /api/login)
+    description: Autenticação e geração de JWT
+
+  - _id: req_login_success
+    _type: request
+    parentId: fld_login
+    name: Sucesso (200)
+    method: POST
+    url: "{{ _.base_url }}/api/login"
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "teste-prod@email.com",
+          "password": "senha123"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  - _id: req_login_pass_invalid
+    _type: request
+    parentId: fld_login
+    name: Erro - Senha incorreta (401)
+    method: POST
+    url: "{{ _.base_url }}/api/login"
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "teste-prod@email.com",
+          "password": "senha-errada"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  - _id: req_login_email_invalid
+    _type: request
+    parentId: fld_login
+    name: Erro - Email não existe (401)
+    method: POST
+    url: "{{ _.base_url }}/api/login"
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "nao-existe@teste.com",
+          "password": "senha123"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  - _id: req_login_bad_request
+    _type: request
+    parentId: fld_login
+    name: Erro - Requisição mal formatada (401)
+    method: POST
+    url: "{{ _.base_url }}/api/login"
+    body:
+      mimeType: application/json
+      # Faltando o campo "password"
+      text: |-
+        {
+          "email": "teste-prod@email.com"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+
+  # --- PASTA 3: PROTECTED (BÔNUS) ---
+  - _id: fld_protected
+    _type: request_group
+    parentId: wrk_1
+    name: 3. Protected (GET /api/protected)
+    description: Testa a validação do Token JWT
+    
+  - _id: req_protected_success
+    _type: request
+    parentId: fld_protected
+    name: Sucesso (200)
+    method: GET
+    url: "{{ _.base_url }}/api/protected"
+    # Esta é a parte "mágica":
+    # Pega o token da resposta do "Login Sucesso"
+    authentication:
+      type: bearer
+      token: "{% response 'body', 'req_login_success', 'b64::JC50b2tlbg==::46b', 'never', 60 %}"
+    headers: []
+
+  - _id: req_protected_fail
+    _type: request
+    parentId: fld_protected
+    name: Erro - Token inválido (403)
+    method: GET
+    url: "{{ _.base_url }}/api/protected"
+    authentication:
+      type: bearer
+      token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjU4N... # Token falso
+    headers: []
