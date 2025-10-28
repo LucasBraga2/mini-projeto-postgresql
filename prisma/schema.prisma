@@ -7,7 +7,16 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Lê a URL do seu .env
+  
+  // 1. URL PRINCIPAL: Usada localmente E pela sua aplicação em produção
+  // No .env local, ela lê: "postgresql://myuser:mypassword..."
+  // No Vercel, vamos configurá-la para usar a URL de "pooling"
+  url = env("DATABASE_URL") 
+  
+  // 2. URLs DIRETAS: Usadas pelo Vercel no momento do build/migração
+  // O Vercel preenche estas variáveis automaticamente ao vincular o banco.
+  directUrl         = env("POSTGRES_URL_NON_POOLING")
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") 
 }
 
 // ---- NOSSOS MODELOS ----
