@@ -1,41 +1,35 @@
-version: '3.8' # Especifica a versão do Docker Compose
+# Remova a linha "version: '3.8'" que estava aqui
 
 services:
-  mongo-local:
-    image: mongo:latest 
-    container_name: mongodb_local_dev 
-    
-    ports:
-      - "27017:27017"
-      
+  # Serviço do Banco de Dados PostgreSQL
+  postgres-db:
+    image: postgres:16 # <-- 3. RECOMENDADO: Trave a versão (ex: 16)
+    container_name: postgres_local_dev
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: 123456
-      
-      MONGO_INITDB_DATABASE: auth-app-db 
-      
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: my-auth-db 
+    ports:
+      - "5432:5432" 
     volumes:
-      - mongo-data:/data/db
-      
+      # 2. CORREÇÃO: Mude o caminho do volume.
+      # A imagem agora gerencia as subpastas dentro de /var/lib/postgresql
+      - postgres-data:/var/lib/postgresql 
     restart: unless-stopped
 
-  mongo-express:
-    image: mongo-express:latest
-    container_name: mongo_express_dev
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
+  # Serviço do pgAdmin (Interface Gráfica)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_local_dev
     environment:
-      ME_CONFIG_BASICAUTH_USERNAME: root
-      ME_CONFIG_BASICAUTH_PASSWORD: 123456
-
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: 123456
-      ME_CONFIG_MONGODB_SERVER: mongo-local
-      ME_CONFIG_MONGODB_PORT: 27017
-      ME_CONFIG_MONGODB_URL: mongodb://root:123456@mongo-local:27017/auth-app-db?authSource=admin
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com 
+      PGADMIN_DEFAULT_PASSWORD: admin 
+    ports:
+      - "8080:80" 
     depends_on:
-      - mongo-local
+      - postgres-db
+    restart: unless-stopped
+
 volumes:
-  mongo-data:
-    driver: local 
+  postgres-data:
+    driver: local

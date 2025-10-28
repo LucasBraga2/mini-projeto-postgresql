@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Lê a URL do seu .env
+}
+
+// ---- NOSSOS MODELOS ----
+
+model User {
+  id        String   @id @default(cuid()) // CUID é como um ObjectId
+  name      String
+  email     String   @unique
+  password  String   // Não podemos mais usar "select: false". Faremos isso no serviço.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relação: Um Usuário pode ter muitos Filmes
+  movies    Movie[]
+
+  @@map("users") // Nome da tabela no banco
+}
+
+model Movie {
+  id        String   @id @default(cuid())
+  title     String
+  director  String? // O '?' torna o campo opcional
+  genre     String?
+  releaseYear Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relação: O Filme pertence a um Usuário
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   // Esta é a chave estrangeira real
+
+  @@map("movies") // Nome da tabela no banco
+}
