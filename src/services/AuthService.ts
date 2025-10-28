@@ -35,7 +35,7 @@ class AuthService {
       console.log(`[AuthService] Usuário ${email} registrado.`);
       return this.omitPassword(user);
 
-    } catch (error) {
+    } catch (error: any) {
       // 3. Tratar erro de email duplicado
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new Error('Email já cadastrado.');

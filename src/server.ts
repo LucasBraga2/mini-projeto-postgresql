@@ -19,7 +19,7 @@ prisma.$connect()
   .then(() => {
     console.log('PostgreSQL conectado com sucesso.');
   })
-  .catch((error) => {
+  .catch((error: any) => {
     console.error('Erro ao conectar ao PostgreSQL:', error);
     process.exit(1);
   });
