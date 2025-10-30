@@ -27,20 +27,15 @@ app.get('/', (req: Request, res: Response) => {
 
 const startServer = async () => {
   try {
-    // 1. Testa a conexão com o banco
     if (!db.sequelize) {
       throw new Error('Database connection not initialized');
     }
     await db.sequelize.authenticate();
     console.log('PostgreSQL conectado com sucesso.');
 
-    // 2. Sincroniza os modelos com o banco de dados
-    // Isso cria as tabelas (users, movies) se elas não existirem
-    // 'alter: true' tenta alterar as tabelas para bater com os modelos (bom para dev)
     await db.sequelize.sync({ alter: true }); 
     console.log('Modelos sincronizados com o banco de dados.');
 
-    // 3. Inicia o servidor Express APÓS a conexão
     app.listen(PORT, () => {
       console.log(`Servidor rodando em http://localhost:${PORT}`);
       console.log(`Ambiente: ${process.env.NODE_ENV}`);
