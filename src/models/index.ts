@@ -26,6 +26,7 @@ if (env === 'production') {
   sequelize = new Sequelize(config.database, config.user, config.password, {
     host: config.host,
     port: config.port,
+    dialect: 'postgres',
     dialectModule: pg,
     pool: config.pool,
     logging: false, // Desativa os logs de query SQL no console
