@@ -1,6 +1,6 @@
 import 'dotenv/config'; 
 import express, { Application, Request, Response, NextFunction } from 'express';
-import prisma from './database/prisma';
+import db from './models';
 import authRoutes from './routes/authRoutes';
 import movieRoutes from './routes/movieRoutes'; 
 
@@ -15,15 +15,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-prisma.$connect()
-  .then(() => {
-    console.log('PostgreSQL conectado com sucesso.');
-  })
-  .catch((error: any) => {
-    console.error('Erro ao conectar ao PostgreSQL:', error);
-    process.exit(1);
-  });
-
 // --- Rotas ---
 app.use('/api', authRoutes);
 
@@ -34,8 +25,31 @@ app.get('/', (req: Request, res: Response) => {
   res.status(200).json({ status: 'API está online!' });
 });
 
+const startServer = async () => {
+  try {
+    // 1. Testa a conexão com o banco
+    if (!db.sequelize) {
+      throw new Error('Database connection not initialized');
+    }
+    await db.sequelize.authenticate();
+    console.log('PostgreSQL conectado com sucesso.');
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-  console.log(`Ambiente: ${process.env.NODE_ENV}`);
-}); 
+    // 2. Sincroniza os modelos com o banco de dados
+    // Isso cria as tabelas (users, movies) se elas não existirem
+    // 'alter: true' tenta alterar as tabelas para bater com os modelos (bom para dev)
+    await db.sequelize.sync({ alter: true }); 
+    console.log('Modelos sincronizados com o banco de dados.');
+
+    // 3. Inicia o servidor Express APÓS a conexão
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando em http://localhost:${PORT}`);
+      console.log(`Ambiente: ${process.env.NODE_ENV}`);
+    });
+
+  } catch (error: any) {
+    console.error('Erro ao conectar ou sincronizar o banco de dados:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

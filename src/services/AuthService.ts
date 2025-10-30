@@ -1,43 +1,39 @@
-import prisma from '../database/prisma';
-import { User } from '@prisma/client'; 
-import jwt from 'jsonwebtoken';
+import db from '../models'; // Importa o db (que contém User)
+import { UniqueConstraintError } from 'sequelize';
 import bcrypt from 'bcrypt';
-import { Prisma } from '@prisma/client'; 
+import jwt from 'jsonwebtoken';
+
+// Interface para os dados do usuário (opcional, mas boa prática)
+interface UserData {
+  name?: string;
+  email?: string;
+  password?: string;
+}
 
 class AuthService {
   
-  // Remove a senha do objeto de usuário para retorno seguro
-  private omitPassword(user: User): Omit<User, 'password'> {
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  }
-
-  public async register(userData: Partial<User>): Promise<Omit<User, 'password'>> {
+  public async register(userData: UserData): Promise<any> {
     const { name, email, password } = userData;
 
     if (!name || !email || !password) {
       throw new Error('Nome, email e senha são obrigatórios.');
     }
 
-    // 1. Hashear a senha (Lógica que estava no Mongoose Model)
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     try {
-      // 2. Criar usuário com Prisma
-      const user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          password: hashedPassword,
-        },
+      const user = await db.User.create({
+        name,
+        email,
+        password,
       });
 
+      const userJson = user.toJSON();
+      delete userJson.password;
+      
       console.log(`[AuthService] Usuário ${email} registrado.`);
-      return this.omitPassword(user);
+      return userJson;
 
     } catch (error: any) {
-      // 3. Tratar erro de email duplicado
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (error instanceof UniqueConstraintError) {
         throw new Error('Email já cadastrado.');
       }
       throw error;
@@ -49,8 +45,7 @@ class AuthService {
       throw new Error('Email e senha são obrigatórios.');
     }
 
-    // 1. Encontra o usuário (o Prisma agora retorna a senha por padrão)
-    const user = await prisma.user.findUnique({
+    const user = await db.User.findOne({
       where: { email: email },
     });
 
@@ -58,20 +53,18 @@ class AuthService {
       throw new Error('Credenciais inválidas.');
     }
 
-    // 2. Compara a senha (lógica igual)
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    const isPasswordMatch = await user.isValidPassword(password);
     if (!isPasswordMatch) {
       throw new Error('Credenciais inválidas.');
     }
 
-    // 3. Gera o token (lógica igual)
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error('Chave JWT não configurada no servidor.');
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email }, // Usamos o 'id' (String) do Prisma
+      { id: user.id, email: user.email }, 
       secret,
       { expiresIn: '1h' }
     );

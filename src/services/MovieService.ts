@@ -1,92 +1,82 @@
-import prisma from '../database/prisma';
-import { Movie } from '@prisma/client'; 
+import db from '../models'; // Importa o db (que contém Movie)
+import Movie from '../models/Movie'; // Importa a interface/tipo
+
+// Interface para os dados do filme
+interface MovieData {
+  title?: string;
+  director?: string;
+  genre?: string;
+  releaseYear?: number;
+}
 
 class MovieService {
   
-  public async create(movieData: Partial<Movie>, userId: string): Promise<Movie> {
-    const { title, director, genre, releaseYear } = movieData;
-    
-    if (!title) {
+  public async create(movieData: MovieData, userId: string): Promise<any> {
+    if (!movieData.title) {
       throw new Error('Erro de validação: O título é obrigatório.');
     }
-
-    const movie = await prisma.movie.create({
-      data: {
-        title,
-        director: director ?? null,
-        genre: genre ?? null,
-        releaseYear: releaseYear ?? null,
-        userId: userId, // Conecta ao usuário
-      },
+    
+    const movie = await db.Movie.create({
+      ...movieData,
+      userId: userId, 
     });
-    return movie;
+    return movie.toJSON();
   }
 
-  public async getAll(userId: string): Promise<Movie[]> {
-    const movies = await prisma.movie.findMany({
+  public async getAll(userId: string): Promise<any[]> {
+    const movies = await db.Movie.findAll({
       where: { userId: userId },
     });
     return movies;
   }
 
-  public async getById(movieId: string, userId: string): Promise<Movie> {
-    const movie = await prisma.movie.findFirst({
+  public async getById(movieId: string, userId: string): Promise<any> {
+    const movie = await db.Movie.findOne({
       where: {
         id: movieId,
-        userId: userId, // Garante que o filme é do usuário
+        userId: userId, 
       },
     });
 
     if (!movie) {
       throw new Error('Filme não encontrado ou não pertence ao usuário.');
     }
-    return movie;
+    return movie.toJSON();
   }
 
   public async update(
     movieId: string,
-    movieData: Partial<Movie>,
+    movieData: MovieData,
     userId: string
-  ): Promise<Movie> {
-    try {
-      // O Prisma não nos deixa atualizar se a condição 'where' falhar
-      // (incluindo o userId), o que garante a segurança.
-      const updatedMovie = await prisma.movie.updateMany({
-        where: {
-          id: movieId,
-          userId: userId,
-        },
-        data: movieData,
-      });
-
-      if (updatedMovie.count === 0) {
-        throw new Error('Filme não encontrado ou não pertence ao usuário.');
-      }
-      
-      // Como updateMany não retorna o objeto, buscamos ele novamente
-      return this.getById(movieId, userId);
-
-    } catch (error: any) {
-      // Captura erro caso o ID não seja encontrado (pelo getById)
-      if (error.message.includes('não encontrado')) {
-        throw error;
-      }
-      throw new Error('Erro ao atualizar filme.');
-    }
-  }
-
-  public async delete(movieId: string, userId: string): Promise<void> {
-    // O deleteMany garante que só deletamos se o ID e o UserID baterem
-    const deleteResult = await prisma.movie.deleteMany({
+  ): Promise<any> {
+    const movie = await db.Movie.findOne({
       where: {
         id: movieId,
         userId: userId,
       },
     });
 
-    if (deleteResult.count === 0) {
+    if (!movie) {
       throw new Error('Filme não encontrado ou não pertence ao usuário.');
     }
+    
+    await movie.update(movieData);
+    return movie.toJSON();
+  }
+
+  public async delete(movieId: string, userId: string): Promise<void> {
+    const movie = await db.Movie.findOne({
+      where: {
+        id: movieId,
+        userId: userId,
+      },
+    });
+
+    if (!movie) {
+      throw new Error('Filme não encontrado ou não pertence ao usuário.');
+    }
+
+    await movie.destroy();
   }
 }
 
