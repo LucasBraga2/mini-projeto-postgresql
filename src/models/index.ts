@@ -2,6 +2,7 @@ import { Sequelize } from 'sequelize';
 import fs from 'fs';
 import path from 'path';
 import configObject from '../database/configdb';
+import pg from 'pg';
 
 const env = process.env.NODE_ENV || 'development';
 let sequelize: Sequelize;
@@ -25,7 +26,7 @@ if (env === 'production') {
   sequelize = new Sequelize(config.database, config.user, config.password, {
     host: config.host,
     port: config.port,
-    dialect: config.dialect as 'postgres',
+    dialectModule: pg,
     pool: config.pool,
     logging: false, // Desativa os logs de query SQL no console
   });
