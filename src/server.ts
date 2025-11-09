@@ -19,7 +19,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 const allowedFrontends = [
   'http://localhost:5173',                        // Local
-  'https://mini-projeto-frontend-postgres.vercel.app' //frontend de produção (Postgres)
+  'https://mini-projeto-frontend-postgresql.vercel.app' //frontend de produção (Postgres)
 ];
 
 app.use(cors({
