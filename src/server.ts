@@ -17,8 +17,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+const allowedFrontends = [
+  'http://localhost:5173',                        // Local
+  'https://mini-projeto-frontend-postgres.vercel.app' //frontend de produção (Postgres)
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173' 
+ origin: allowedFrontends
 }));
 
 // --- Rotas ---
