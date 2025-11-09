@@ -3,6 +3,8 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import db from './models';
 import authRoutes from './routes/authRoutes';
 import movieRoutes from './routes/movieRoutes'; 
+import cors from 'cors'; 
+
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +16,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
+
+app.use(cors({
+  origin: 'http://localhost:5173' 
+}));
 
 // --- Rotas ---
 app.use('/api', authRoutes);
