@@ -66,7 +66,7 @@ class AuthService {
     const token = jwt.sign(
       { id: user.id, email: user.email }, 
       secret,
-      { expiresIn: '1h' }
+      { expiresIn: '30s' }
     );
 
     console.log(`[AuthService] Usuário ${email} logado com sucesso.`);
