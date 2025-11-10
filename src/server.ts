@@ -41,11 +41,14 @@ const startServer = async () => {
     if (!db.sequelize) {
       throw new Error('Database connection not initialized');
     }
+    
     await db.sequelize.authenticate();
     console.log('PostgreSQL conectado com sucesso.');
 
-    await db.sequelize.sync({ alter: true }); 
-    console.log('Modelos sincronizados com o banco de dados.');
+    if (process.env.NODE_ENV === 'development') {
+      await db.sequelize.sync({ alter: true }); 
+      console.log('Modelos sincronizados com o banco de dados (modo dev).');
+    }
 
     app.listen(PORT, () => {
       console.log(`Servidor rodando em http://localhost:${PORT}`);
